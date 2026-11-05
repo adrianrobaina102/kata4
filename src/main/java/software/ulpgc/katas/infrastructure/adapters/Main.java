@@ -6,11 +6,23 @@ import io.javalin.http.Context;
 import software.ulpgc.katas.application.domain.FindMoviesByGenreUseCase;
 import software.ulpgc.katas.application.model.Genre;
 import software.ulpgc.katas.application.model.Movie;
+import software.ulpgc.katas.application.ports.Output;
 
 import java.time.Year;
 import java.util.List;
 
 public class Main {
+    static void main(String[] args) {
+        Javalin.create(config -> init(config)).start(8080);
+    }
+
+    private static void init(JavalinConfig config) {
+        config.routes.get("/movies", context -> context.result(getExecute(context).result()));
+    }
+
+    private static Output getExecute(Context context) {
+        return new FindMoviesByGenreUseCase(new JsonMovieSerializer(), getMovies()).execute(new JavalinContextInput(context));
+    }
 
     public static List<Movie> getMovies() {
         return List.of(
