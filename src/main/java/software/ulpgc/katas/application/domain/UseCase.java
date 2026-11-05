@@ -1,6 +1,9 @@
 package software.ulpgc.katas.application.domain;
 
 
-public interface UseCase {
+import software.ulpgc.katas.application.ports.Input;
+import software.ulpgc.katas.application.ports.Output;
 
+public interface UseCase {
+    Output execute(Input input);
 }
