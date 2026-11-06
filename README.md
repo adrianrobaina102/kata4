@@ -17,66 +17,67 @@ Construir un servicio HTTP en Java capaz de exponer y consultar un catálogo de 
 ## Estructura del Proyecto (Arquitectura Hexagonal)
 El código se organiza bajo el paquete `software.ulpgc.katas`, aplicando una separación estricta de responsabilidades e inversión de dependencias:
 
-- **Paquete `application.model` (El Núcleo):** Entidades de dominio puras y aisladas de cualquier tecnología externa. Se utiliza el `record` inmutable [`Movie`](src/main/java/software/ulpgc/katas/application/model/Movie.java) y el enumerado [`Genre`](src/main/java/software/ulpgc/katas/application/model/Genre.java) para tipar y blindar las categorías válidas del catálogo.
+- **Paquete `application.model` (El Núcleo):** Entidades de dominio puras y aisladas de cualquier tecnología externa. Se utilizan `records` inmutables (ej. `Movie`, `Game`) y enumerados (`Genre`, `Platform`) para tipar y blindar las categorías válidas de cada catálogo.
 - **Paquete `application.ports` (Los Contratos):** Interfaces genéricas que expresan qué necesita el dominio para comunicarse con el exterior sin depender de implementaciones concretas:
-  - [`Input`](src/main/java/software/ulpgc/katas/application/ports/Input.java) e `Input.Parameter`: Abstracción para la lectura de parámetros de entrada.
-  - [`Output`](src/main/java/software/ulpgc/katas/application/ports/Output.java): Contrato que representa la respuesta procesada lista para ser entregada.
-  - [`MovieSerializer`](src/main/java/software/ulpgc/katas/application/ports/MovieSerializer.java): Puerto encargado de transformar colecciones de objetos `Movie` a su representación textual.
-- **Paquete `application.domain` (Casos de Uso):** Contiene la interfaz [`UseCase`](src/main/java/software/ulpgc/katas/application/domain/UseCase.java) y su implementación [`FindMoviesByGenreUseCase`](src/main/java/software/ulpgc/katas/application/domain/FindMoviesByGenreUseCase.java), que recibe el catálogo y el serializador por inyección de dependencias, normaliza el parámetro recibido y filtra las películas mediante Java Streams.
+  - `Input` e `Input.Parameter`: Abstracción para la lectura dinámica de parámetros (`asString()`, `asInteger()`).
+  - `Output`: Contrato que representa la respuesta procesada lista para ser entregada.
+  - `MovieSerializer` / `GameSerializer`: Puertos encargados de transformar colecciones de objetos a su representación textual.
+- **Paquete `application.domain` (Casos de Uso):** Contiene la interfaz `UseCase` y las implementaciones de negocio (`FindMoviesByGenreUseCase`, `FindGamesByPlatformUseCase`, `FindGamesByScoreUseCase`), que reciben el catálogo y el serializador por inyección de dependencias y aplican filtrado funcional con Java Streams.
 - **Paquete `infrastructure.adapters` (La Infraestructura):** Implementaciones concretas de los puertos y ensamblaje de la aplicación:
-  - [`JavalinContextInput`](src/main/java/software/ulpgc/katas/infrastructure/adapters/JavalinContextInput.java): Adaptador HTTP que envuelve el `Context` de Javalin para extraer los parámetros de la URL (`queryParam`).
-  - [`JsonMovieSerializer`](src/main/java/software/ulpgc/katas/infrastructure/adapters/JsonMovieSerializer.java): Adaptador que implementa `MovieSerializer` empleando `Gson` para generar la salida JSON.
-  - [`Main`](src/main/java/software/ulpgc/katas/infrastructure/adapters/Main.java): Punto de entrada que actúa como inyector de dependencias, inicializa el servidor Javalin en el puerto `8080` y registra el endpoint `GET /movies`.
+  - `JavalinContextInput`: Adaptador HTTP que envuelve el `Context` de Javalin para extraer los parámetros de la URL de forma genérica.
+  - `JsonMovieSerializer` / `JsonGamesSerializer`: Adaptadores que implementan los serializadores empleando `Gson` para generar la salida JSON.
+  - `Main`: Punto de entrada que actúa como inyector de dependencias, inicializa el servidor Javalin en el puerto `8080` y registra los endpoints REST.
 
 ## Práctica Deliberada (Iteraciones)
-Siguiendo la dinámica de repetición deliberada para afianzar el patrón de Puertos y Adaptadores en servicios HTTP:
-- **Iteración 1 (Principal - Demostrada en el vídeo):** Servicio HTTP de catálogo de películas con filtrado dinámico por género (`GET /movies?genre={genre}`), validación mediante `enum` y serialización JSON con Gson.
+Siguiendo la dinámica de repetición deliberada para afianzar el patrón de Puertos y Adaptadores en servicios HTTP a través de distintos dominios:
+- **Rama `master` (Iteración 1 - Principal, demostrada en el vídeo):** Servicio HTTP de catálogo de películas con filtrado dinámico por género (`GET /movies?genre={genre}`), validación mediante `enum` y serialización JSON con Gson.
+- **Rama `iteration-2` (Iteración 2 - Catálogo de Videojuegos):** Servicio HTTP unificado en `GET /games` con dos casos de uso desacoplados según el parámetro recibido:
+  - Filtrado numérico por puntuación mínima (`?score={minScore}`) implementando `asInteger()` en el puerto `Input`.
+  - Filtrado por plataforma (`?platform={platform}`).
+  - Retorno del catálogo completo por defecto si no se especifican filtros.
+  - Gestión defensiva de nulos y excepciones de formato numérico (`NumberFormatException`).
+- **Rama `iteration-3` (Iteración 3 - Pokédex Express):** Siguiente iteración planificada para afianzar la arquitectura con un nuevo dominio.
 
 ## Flujo Git y Proceso de Desarrollo
 - **Ramas base:** Uso de rama principal `master` y rama de desarrollo `develop`.
 - **Desarrollo iterativo:** El código se construyó de adentro hacia afuera mediante commits atómicos y semánticos (`feat(domain)`, `feat(ports)`, `feat(application)`, `feat(infrastructure)`):
-  1. Definición del modelo de dominio (`Movie`, `Genre`).
-  2. Creación de los contratos de entrada, salida y serialización (`Input`, `Output`, `MovieSerializer`).
-  3. Implementación de la lógica de negocio en el caso de uso (`UseCase`, `FindMoviesByGenreUseCase`).
-  4. Implementación de los adaptadores de infraestructura (`JavalinContextInput`, `JsonMovieSerializer`) y configuración del servidor en `Main`.
+  1. Definición del modelo de dominio (`Movie`, `Genre` en iteración 1; `Game`, `Platform` en iteración 2).
+  2. Creación de los contratos de entrada, salida y serialización (`Input`, `Output`, serializers).
+  3. Implementación de la lógica de negocio en los casos de uso con Streams.
+  4. Implementación de los adaptadores de infraestructura (`JavalinContextInput`, serializadores JSON) y configuración del servidor en `Main`.
 
 ## Ejecución Rápida y Verificación
 1. Clonar el repositorio y abrir el proyecto en **IntelliJ IDEA**:
    ```bash
    git clone https://github.com/adrianrobaina102/kata4.git
    ```
-2. Esperar a que Maven descargue las dependencias definidas en el `pom.xml` o compilar manualmente:
+2. Hacer `git checkout` a la rama que se desee probar (`master` o `iteration-2`):
+   ```bash
+   git checkout master       # Para probar la Iteración 1 (Películas)
+   # o bien:
+   git checkout iteration-2  # Para probar la Iteración 2 (Videojuegos)
+   ```
+3. Compilar el proyecto con Maven:
    ```bash
    mvn clean compile
    ```
-3. Ejecutar la clase [`Main`](src/main/java/software/ulpgc/katas/infrastructure/adapters/Main.java) desde el IDE (`Shift + F10`) o por terminal:
+4. Ejecutar la clase `Main` desde el IDE (`Shift + F10`) o por terminal:
    ```bash
-   mvn exec:java -Dexec.mainClass="software.ulpgc.katas.infrastructure.adapters.Main"
+   mvn exec:java -Dexec.mainClass="software.ulpgc.katas.infrastructure.Main"
    ```
-4. Con el servidor activo en `http://localhost:8080`, verificar las siguientes peticiones desde el navegador, Postman o `curl`:
 
-### Pruebas y Resultados Esperados
-- **Consulta por género (Caso normal - Acción):**
-  - **URL:** `http://localhost:8080/movies?genre=action` (o `?genre=ACTION`)
-  - **Estado HTTP:** `200 OK`
-  - **Respuesta JSON:**
-    ```json
-    [
-      {"title":"The Dark Knight","genre":"ACTION","year":{"year":2008},"rating":"PG-13"},
-      {"title":"Mad Max: Fury Road","genre":"ACTION","year":{"year":2015},"rating":"R"}
-    ]
-    ```
-- **Consulta por género (Caso normal - Ciencia Ficción):**
-  - **URL:** `http://localhost:8080/movies?genre=sci_fi`
-  - **Estado HTTP:** `200 OK`
-  - **Respuesta JSON:**
-    ```json
-    [
-      {"title":"Inception","genre":"SCI_FI","year":{"year":2010},"rating":"PG-13"},
-      {"title":"Interstellar","genre":"SCI_FI","year":{"year":2014},"rating":"PG-13"}
-    ]
-    ```
-- **Casos de Borde y Errores:**
-  - **Parámetro inválido o inexistente:** `http://localhost:8080/movies?genre=inexistente` ➔ El servidor rechaza el valor al no pertenecer al enumerado `Genre`, devolviendo un código HTTP de error (`500 Internal Server Error`) controlado por Javalin.
-  - **Ruta no registrada:** `http://localhost:8080/otra-ruta` ➔ Devuelve código HTTP `404 Not Found`.
-  - **Servicio no disponible:** Al detener la ejecución de `Main`, cualquier petición a `http://localhost:8080/movies` resulta en error de red (`ERR_CONNECTION_REFUSED`).
+---
+
+### Verificación de la Iteración 1 (Rama `master` - Películas)
+- **Consulta por género (Acción):** `http://localhost:8080/movies?genre=action` ➔ Devuelve *The Dark Knight* y *Mad Max: Fury Road* (`200 OK`).
+- **Consulta por género (Sci-Fi):** `http://localhost:8080/movies?genre=sci_fi` ➔ Devuelve *Inception* e *Interstellar* (`200 OK`).
+- **Parámetro inválido:** `http://localhost:8080/movies?genre=inexistente` ➔ Error 500 controlado al no pertenecer al enum.
+
+---
+
+### Verificación de la Iteración 2 (Rama `iteration-2` - Videojuegos)
+- **Catálogo completo (sin parámetros):** `http://localhost:8080/games` ➔ Retorna los 11 juegos (`200 OK`).
+- **Filtro por puntuación mínima:** `http://localhost:8080/games?score=95` ➔ Retorna únicamente los juegos con nota $\ge 95$ (*Zelda BotW*, *Super Mario Odyssey*, *The Last of Us Part I*, *Baldur's Gate 3*).
+- **Filtro por plataforma:** `http://localhost:8080/games?platform=nintendo` ➔ Retorna los juegos de Nintendo (`Zelda`, `Mario`).
+- **Filtro inexistente:** `http://localhost:8080/games?platform=sega` ➔ Retorna lista vacía `[]` de forma segura (`200 OK`).
+- **Servicio no disponible:** Al detener la ejecución de `Main`, cualquier petición resulta en error de red (`ERR_CONNECTION_REFUSED`).
