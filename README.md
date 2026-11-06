@@ -17,15 +17,15 @@ Construir un servicio HTTP en Java capaz de exponer y consultar un catálogo de 
 ## Estructura del Proyecto (Arquitectura Hexagonal)
 El código se organiza bajo el paquete `software.ulpgc.katas`, aplicando una separación estricta de responsabilidades e inversión de dependencias:
 
-- **Paquete `application.model` (El Núcleo):** Entidades de dominio puras y aisladas de cualquier tecnología externa. Se utilizan `records` inmutables (ej. `Movie`, `Game`) y enumerados (`Genre`, `Platform`) para tipar y blindar las categorías válidas de cada catálogo.
+- **Paquete `application.model` (El Núcleo):** Entidades de dominio puras y aisladas de cualquier tecnología externa. Se utilizan `records` inmutables (`Movie`, `Game`, `Book`) y enumerados (`Genre`, `Platform`, `Category`) para tipar y blindar las categorías válidas de cada catálogo.
 - **Paquete `application.ports` (Los Contratos):** Interfaces genéricas que expresan qué necesita el dominio para comunicarse con el exterior sin depender de implementaciones concretas:
   - `Input` e `Input.Parameter`: Abstracción para la lectura dinámica de parámetros (`asString()`, `asInteger()`).
   - `Output`: Contrato que representa la respuesta procesada lista para ser entregada.
-  - `MovieSerializer` / `GameSerializer`: Puertos encargados de transformar colecciones de objetos a su representación textual.
-- **Paquete `application.domain` (Casos de Uso):** Contiene la interfaz `UseCase` y las implementaciones de negocio (`FindMoviesByGenreUseCase`, `FindGamesByPlatformUseCase`, `FindGamesByScoreUseCase`), que reciben el catálogo y el serializador por inyección de dependencias y aplican filtrado funcional con Java Streams.
+  - `MovieSerializer` / `GameSerializer` / `BookSerializer`: Puertos encargados de transformar colecciones de objetos a su representación textual.
+- **Paquete `application.domain` (Casos de Uso):** Contiene la interfaz `UseCase` y las implementaciones de negocio (`FindMoviesByGenreUseCase`, `FindGamesByPlatformUseCase`, `FindGamesByScoreUseCase`, `FindBookByAuthorUseCase`, `FindBookByCategoryUseCase`), que reciben el catálogo y el serializador por inyección de dependencias y aplican filtrado funcional con Java Streams.
 - **Paquete `infrastructure.adapters` (La Infraestructura):** Implementaciones concretas de los puertos y ensamblaje de la aplicación:
   - `JavalinContextInput`: Adaptador HTTP que envuelve el `Context` de Javalin para extraer los parámetros de la URL de forma genérica.
-  - `JsonMovieSerializer` / `JsonGamesSerializer`: Adaptadores que implementan los serializadores empleando `Gson` para generar la salida JSON.
+  - Serializadores JSON (`JsonMovieSerializer`, `JsonGamesSerializer`, `JsonBookSerializer`): Adaptadores que implementan los serializadores empleando `Gson` para generar la salida JSON.
   - `Main`: Punto de entrada que actúa como inyector de dependencias, inicializa el servidor Javalin en el puerto `8080` y registra los endpoints REST.
 
 ## Práctica Deliberada (Iteraciones)
@@ -36,12 +36,15 @@ Siguiendo la dinámica de repetición deliberada para afianzar el patrón de Pue
   - Filtrado por plataforma (`?platform={platform}`).
   - Retorno del catálogo completo por defecto si no se especifican filtros.
   - Gestión defensiva de nulos y excepciones de formato numérico (`NumberFormatException`).
-- **Rama `iteration-3` (Iteración 3 - Pokédex Express):** Siguiente iteración planificada para afianzar la arquitectura con un nuevo dominio.
+- **Rama `iteration-3` (Iteración 3 - Catálogo de Libros):** Servicio HTTP unificado en `GET /books` con búsqueda multi-criterio:
+  - Filtrado por autor (`?author={author}`) empleando comparaciones textuales seguras.
+  - Filtrado por categoría (`?category={category}`) con validación insensible a mayúsculas (`.toUpperCase()`).
+  - Retorno del catálogo completo por defecto y control de excepciones seguras devolviendo listas vacías ante datos no encontrados.
 
 ## Flujo Git y Proceso de Desarrollo
 - **Ramas base:** Uso de rama principal `master` y rama de desarrollo `develop`.
 - **Desarrollo iterativo:** El código se construyó de adentro hacia afuera mediante commits atómicos y semánticos (`feat(domain)`, `feat(ports)`, `feat(application)`, `feat(infrastructure)`):
-  1. Definición del modelo de dominio (`Movie`, `Genre` en iteración 1; `Game`, `Platform` en iteración 2).
+  1. Definición del modelo de dominio (`Movie`, `Genre` en iteración 1; `Game`, `Platform` en iteración 2; `Book`, `Category` en iteración 3).
   2. Creación de los contratos de entrada, salida y serialización (`Input`, `Output`, serializers).
   3. Implementación de la lógica de negocio en los casos de uso con Streams.
   4. Implementación de los adaptadores de infraestructura (`JavalinContextInput`, serializadores JSON) y configuración del servidor en `Main`.
@@ -51,11 +54,11 @@ Siguiendo la dinámica de repetición deliberada para afianzar el patrón de Pue
    ```bash
    git clone https://github.com/adrianrobaina102/kata4.git
    ```
-2. Hacer `git checkout` a la rama que se desee probar (`master` o `iteration-2`):
+2. Hacer `git checkout` a la rama que se desee probar (`master`, `iteration-2` o `iteration-3`):
    ```bash
    git checkout master       # Para probar la Iteración 1 (Películas)
-   # o bien:
    git checkout iteration-2  # Para probar la Iteración 2 (Videojuegos)
+   git checkout iteration-3  # Para probar la Iteración 3 (Libros)
    ```
 3. Compilar el proyecto con Maven:
    ```bash
@@ -63,7 +66,7 @@ Siguiendo la dinámica de repetición deliberada para afianzar el patrón de Pue
    ```
 4. Ejecutar la clase `Main` desde el IDE (`Shift + F10`) o por terminal:
    ```bash
-   mvn exec:java -Dexec.mainClass="software.ulpgc.katas.infrastructure.Main"
+   mvn exec:java -Dexec.mainClass="software.ulpgc.katas.infrastructure.adapters.Main"
    ```
 
 ---
@@ -80,4 +83,12 @@ Siguiendo la dinámica de repetición deliberada para afianzar el patrón de Pue
 - **Filtro por puntuación mínima:** `http://localhost:8080/games?score=95` ➔ Retorna únicamente los juegos con nota $\ge 95$ (*Zelda BotW*, *Super Mario Odyssey*, *The Last of Us Part I*, *Baldur's Gate 3*).
 - **Filtro por plataforma:** `http://localhost:8080/games?platform=nintendo` ➔ Retorna los juegos de Nintendo (`Zelda`, `Mario`).
 - **Filtro inexistente:** `http://localhost:8080/games?platform=sega` ➔ Retorna lista vacía `[]` de forma segura (`200 OK`).
+
+---
+
+### Verificación de la Iteración 3 (Rama `iteration-3` - Libros)
+- **Catálogo completo (sin parámetros):** `http://localhost:8080/books` ➔ Retorna los 8 libros del catálogo (`200 OK`).
+- **Filtro por autor:** `http://localhost:8080/books?author=George Orwell` ➔ Retorna *1984* y *Animal Farm* (`200 OK`).
+- **Filtro por categoría:** `http://localhost:8080/books?category=fantasy` (o `?category=FANTASY`) ➔ Retorna *The Hobbit* y *The Fellowship of the Ring* (`200 OK`).
+- **Filtro inexistente:** `http://localhost:8080/books?category=terror` ➔ Retorna lista vacía `[]` de forma segura (`200 OK`).
 - **Servicio no disponible:** Al detener la ejecución de `Main`, cualquier petición resulta en error de red (`ERR_CONNECTION_REFUSED`).
