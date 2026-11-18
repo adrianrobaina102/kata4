@@ -17,7 +17,17 @@ public class Main {
     }
 
     private static void init(JavalinConfig config) {
-        config.routes.get("/movies", context -> context.result(getExecute(context).result()));
+        config.routes.get("/movies", context -> {
+            try {
+                context.status(200)
+                        .contentType("application/json")
+                        .result(getExecute(context).result());
+            } catch (IllegalArgumentException e) {
+                context.status(400)
+                        .contentType("application/json")
+                        .result("{\"error\": \"" + e.getMessage() + "\"}");
+            }
+        });
     }
 
     private static Output getExecute(Context context) {
