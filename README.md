@@ -49,9 +49,9 @@ Siguiendo la dinámica de repetición deliberada para afianzar el patrón de Pue
    git checkout iteration-2  # Iteración 2 (Videojuegos)
    git checkout iteration-3  # Iteración 3 (Libros)
    ```
-2. Compilar el proyecto con Maven:
+2. Compilar y ejecutar los tests unitarios con Maven (sin arrancar el servidor):
    ```bash
-   mvn clean compile
+   mvn clean test
    ```
 3. Arrancar el servidor (puerto `8080`):
    - **En `master` e `iteration-3`:** ejecutar `Main` desde IntelliJ (`Shift + F10`) o mediante:
