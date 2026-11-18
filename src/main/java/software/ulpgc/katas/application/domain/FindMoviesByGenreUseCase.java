@@ -19,7 +19,11 @@ public class FindMoviesByGenreUseCase implements UseCase{
 
     @Override
     public Output execute(Input input) {
-        Genre genre = Genre.valueOf(input.get("genre").asString().toUpperCase());
+        String raw = input.get("genre").asString();
+        if (raw == null|| raw.isEmpty()) {
+            throw new IllegalArgumentException("El parámetro genre es obligatorio");
+        }
+        Genre genre = Genre.valueOf(raw.toUpperCase());
         List<Movie> movieList = findMoviesByGenre(genre);
         return () -> serializer.serialize(movieList);
     }
