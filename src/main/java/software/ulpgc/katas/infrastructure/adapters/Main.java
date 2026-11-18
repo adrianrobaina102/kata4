@@ -18,13 +18,18 @@ public class Main {
 
     private static void init(JavalinConfig config) {
         config.routes.get("/books", ctx -> {
-            if (ctx.queryParam("author") != null) {
-                ctx.result(getExecuteAuthor(ctx).result());
-            } else if (ctx.queryParam("category") != null) {
-                ctx.result(getExecuteCategory(ctx).result());
+            try {
+                if (ctx.queryParam("author") != null) {
+                    ctx.status(200).contentType("application/json").result(getExecuteAuthor(ctx).result());
+                } else if (ctx.queryParam("category") != null) {
+                    ctx.status(200).contentType("application/json").result(getExecuteCategory(ctx).result());
+                }
+                else {
+                    ctx.status(200).contentType("application/json").result(new JsonBookSerializer().serialize(getBooks()));
+                }
             }
-            else {
-                ctx.result(new JsonBookSerializer().serialize(getBooks()));
+            catch (IllegalArgumentException e) {
+                ctx.status(400).contentType("application/json").result("{\"error\": \"" + e.getMessage() + "\"}");
             }
         });
     }
