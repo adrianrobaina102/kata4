@@ -20,14 +20,18 @@ public class Main {
 
     private static void init(JavalinConfig config) {
         config.routes.get("/games", ctx -> {
-            if (ctx.queryParam("platform") != null) {
-                ctx.result(getExecutePlatform(ctx).result());
-            }
-            else if (ctx.queryParam("score") != null) {
-                ctx.result(getExecuteScore(ctx).result());
-            }
-            else {
-                ctx.result(new JsonGamesSerializer().serialize(getGames()));
+            try{
+                if (ctx.queryParam("platform") != null) {
+                    ctx.status(200).contentType("application/json").result(getExecutePlatform(ctx).result());
+                }
+                else if (ctx.queryParam("score") != null) {
+                    ctx.status(200).contentType("application/json").result(getExecuteScore(ctx).result());
+                }
+                else {
+                    ctx.status(200).contentType("application/json").result(new JsonGamesSerializer().serialize(getGames()));
+                }
+            } catch (IllegalArgumentException e) {
+                ctx.status(400).contentType("application/json").result("{\"error\": \"" + e.getMessage() + "\"}");
             }
         });
     }
