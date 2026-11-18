@@ -22,6 +22,9 @@ public class FindGamesByScoreUseCase implements UseCase{
     public Output execute(Input input) {
         Integer scoreParam = input.get("score").asInteger();
         int minScore = (scoreParam != null) ? scoreParam : 0;
+        if (minScore < 0 || minScore > 100) {
+            throw new IllegalArgumentException("El parámetro 'score' debe estar entre 0 y 100");
+        }
         return () -> this.serializer.serialize(FindGamesByScore(minScore));
     }
 

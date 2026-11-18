@@ -19,13 +19,12 @@ public class FindGamesByPlatformUseCase implements UseCase {
 
     @Override
     public Output execute(Input input) {
-        try {
-            String platformName = input.get("platform").asString().toUpperCase();
-            Platform platform = Platform.valueOf(platformName);
-            return () -> this.serializer.serialize(findGamesByPlatform(platform));
-        }  catch (IllegalArgumentException | NullPointerException e) {
-            return () -> this.serializer.serialize(List.of());
+        String raw = input.get("platform").asString();
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("El parámetro 'platform' es obligatorio");
         }
+        Platform platform = Platform.valueOf(raw.toUpperCase());
+        return () -> this.serializer.serialize(findGamesByPlatform(platform));
     }
 
     private List<Game> findGamesByPlatform(Platform platform) {
