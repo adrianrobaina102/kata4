@@ -24,12 +24,8 @@ public class JavalinContextInput implements Input {
 
             @Override
             public Integer asInteger() {
-                try {
-                    String value = asString();
-                    return  (value != null && !value.isBlank()) ? Integer.valueOf(value) : null;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+                String value = asString();
+                return  (value != null && !value.isBlank()) ? Integer.valueOf(value) : null;
             }
         };
     }
