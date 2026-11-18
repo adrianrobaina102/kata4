@@ -1,0 +1,50 @@
+======================================================================
+KATA 4 - EJEMPLOS DE PETICIONES HTTP (CURL) PARA VERIFICACIÓN
+======================================================================
+Nota: En PowerShell (Windows) usar `curl.exe -i` para ver cabeceras
+HTTP (Status Code y Content-Type: application/json).
+En Git Bash / Linux / macOS se puede usar `curl -i` directamente.
+
+----------------------------------------------------------------------
+1. RAMA master / develop - Catálogo de Películas (/movies)
+   Main: software.ulpgc.katas.infrastructure.adapters.Main
+----------------------------------------------------------------------
+# Petición válida (200 OK - application/json)
+curl.exe -i "http://localhost:8080/movies?genre=action"
+curl.exe -i "http://localhost:8080/movies?genre=sci_fi"
+
+# Petición inválida: género inexistente (400 Bad Request - application/json)
+curl.exe -i "http://localhost:8080/movies?genre=inexistente"
+
+# Petición inválida: parámetro ausente (400 Bad Request - application/json)
+curl.exe -i "http://localhost:8080/movies"
+
+
+----------------------------------------------------------------------
+2. RAMA iteration-2 - Catálogo de Videojuegos (/games)
+   Main: software.ulpgc.katas.infrastructure.Main
+----------------------------------------------------------------------
+# Peticiones válidas (200 OK - application/json)
+curl.exe -i "http://localhost:8080/games"
+curl.exe -i "http://localhost:8080/games?score=95"
+curl.exe -i "http://localhost:8080/games?platform=nintendo"
+
+# Peticiones inválidas (400 Bad Request - application/json)
+curl.exe -i "http://localhost:8080/games?score=noventa"
+curl.exe -i "http://localhost:8080/games?score=200"
+curl.exe -i "http://localhost:8080/games?platform=sega"
+
+
+----------------------------------------------------------------------
+3. RAMA iteration-3 - Catálogo de Libros (/books)
+   Main: software.ulpgc.katas.infrastructure.adapters.Main
+----------------------------------------------------------------------
+# Peticiones válidas (200 OK - application/json)
+curl.exe -i "http://localhost:8080/books"
+curl.exe -i "http://localhost:8080/books?category=fantasy"
+curl.exe -i "http://localhost:8080/books?author=George%20Orwell"
+
+# Peticiones inválidas (400 Bad Request - application/json)
+curl.exe -i "http://localhost:8080/books?category=terror"
+curl.exe -i "http://localhost:8080/books?category="
+curl.exe -i "http://localhost:8080/books?author="
