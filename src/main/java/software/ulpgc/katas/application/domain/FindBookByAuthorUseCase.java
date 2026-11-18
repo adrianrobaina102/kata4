@@ -18,13 +18,12 @@ public class FindBookByAuthorUseCase implements UseCase {
 
     @Override
     public Output execute(Input input) {
-        try {
-            String author = input.get("author").asString();
-            List<Book> bookList = FindBookByAuthor(author);
-            return () -> this.serializer.serialize(bookList);
-        } catch (Exception e) {
-            return () -> this.serializer.serialize(List.of());
+        String author = input.get("author").asString();
+        if (author == null || author.isBlank()) {
+            throw new IllegalArgumentException("El parámetro 'author' es obligatorio");
         }
+        List<Book> bookList = FindBookByAuthor(author);
+        return () -> this.serializer.serialize(bookList);
     }
 
     private List<Book> FindBookByAuthor(String author) {

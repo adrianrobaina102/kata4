@@ -19,13 +19,12 @@ public class FindBookByCategoryUseCase implements UseCase{
 
     @Override
     public Output execute(Input input) {
-        try {
-            String author = input.get("category").asString().toUpperCase();
-            List<Book> bookList = FindBookByAuthor(Category.valueOf(author));
-            return () -> this.serializer.serialize(bookList);
-        } catch (Exception e) {
-            return () -> this.serializer.serialize(List.of());
+        String author = input.get("category").asString();
+        if (author == null || author.isBlank()) {
+            throw new IllegalArgumentException("El parámetro 'category' es obligatorio");
         }
+        List<Book> bookList = FindBookByAuthor(Category.valueOf(author.toUpperCase()));
+        return () -> this.serializer.serialize(bookList);
     }
 
     private List<Book> FindBookByAuthor(Category category) {
